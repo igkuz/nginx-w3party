@@ -1,2 +1,53 @@
 ---
-# tasks file for nginx-w3party
+
+- name: necessary packages for nginx-w3party role
+  apt: pkg={{ item }} state=installed
+  with_items:
+    - python-apt
+    - unzip
+    - dpkg-dev
+
+- name: create dir for HttpUploadModule
+  file: state=directory dest=/opt/httpupload
+
+- name: get upload module
+  get_url: url=https://github.com/vkholodkov/nginx-upload-module/archive/2.2.zip dest=/opt/httpupload/2.2.zip
+
+- name: unzip upload
+  unarchive: copy=no src=/opt/httpupload/2.2.zip dest=/opt/httpupload/
+
+- name: Add apt repo stable for nginx
+  apt_repository:
+    repo: 'deb http://ppa.launchpad.net/nginx/stable/ubuntu trusty main'
+    update_cache: yes
+    state: present
+
+- name: Add apt repo-src stable for nginx
+  apt_repository:
+    repo: 'deb-src http://ppa.launchpad.net/nginx/stable/ubuntu trusty main'
+    state: present
+
+- name: Add another apt repository
+  apt_repository: repo=ppa:nginx/stable state=present
+
+- name: create dir for rebuilded nginx
+  file: state=directory dest=/opt/rebuildnginx
+
+- name: get nginx source files
+  command: apt-get source nginx chdir=/opt/rebuildnginx creates=nginx-1.8.0
+
+- name: Build nginx deps
+  command: apt-get -y build-dep nginx chdir=/opt/rebuildnginx
+
+- name: new rules file
+  copy: src=rules dest=/opt/rebuildnginx/nginx-1.8.0/debian/rules force=true
+
+- name: Build new nginx
+  command: dpkg-buildpackage -b chdir=/opt/rebuildnginx/nginx-1.8.0
+
+- name: install new nginx
+  command: dpkg --install {{ item }}
+  with_fileglob:
+    - /opt/rebuildnginx/nginx-common_1.8.0*.deb
+    - /opt/rebuildnginx/nginx-full.8.0*.deb
+
