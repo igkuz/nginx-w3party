@@ -25,7 +25,7 @@
   file: state=directory dest=/opt/rebuildnginx
 
 - name: get nginx source files
-  command: apt-get source nginx chdir=/opt/rebuildnginx creates=nginx-1.8.0
+  command: apt-get source nginx chdir=/opt/rebuildnginx creates=nginx_1.8.0.orig.tar.gz
 
 - name: Build nginx deps
   command: apt-get -y build-dep nginx chdir=/opt/rebuildnginx
@@ -33,12 +33,11 @@
 - name: new rules file
   copy: src=rules dest=/opt/rebuildnginx/nginx-1.8.0/debian/rules force=true
 
+- name: Install nginx-common
+  apt: pkg=nginx-common state=installed
+
 - name: Build new nginx
-  command: dpkg-buildpackage -b chdir=/opt/rebuildnginx/nginx-1.8.0
+  command: dpkg-buildpackage -b chdir=/opt/rebuildnginx/nginx-1.8.0 creates=../nginx_1.8.0-1+trusty1_all.deb
 
 - name: install new nginx
-  command: dpkg --install {{ item }}
-  with_fileglob:
-    - /opt/rebuildnginx/nginx-common_1.8.0*.deb
-    - /opt/rebuildnginx/nginx-full.8.0*.deb
-
+  command: dpkg --install nginx-full_1.8.0-1+trusty1_amd64.deb chdir=/opt/rebuildnginx
