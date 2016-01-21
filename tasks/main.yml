@@ -18,8 +18,16 @@
 - name: unzip upload
   unarchive: copy=no src=/opt/httpupload/2.2.zip dest=/opt/httpupload/
 
-- name: Add another apt repository
-  apt_repository: repo=ppa:nginx/stable state=present
+- name: Add apt repo stable for nginx
+  apt_repository:
+    repo: 'deb http://ppa.launchpad.net/nginx/stable/ubuntu trusty main'
+    update_cache: yes
+    state: present
+
+- name: Add apt repo-src stable for nginx
+  apt_repository:
+    repo: 'deb-src http://ppa.launchpad.net/nginx/stable/ubuntu trusty main'
+    state: present
 
 - name: create dir for rebuilded nginx
   file: state=directory dest=/opt/rebuildnginx
